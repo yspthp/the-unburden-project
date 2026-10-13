@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#211a15">
+<title>苦澀烘焙室｜鬆綁 The Unburden Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<svg class="defs" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="wc" x="-40%" y="-40%" width="180%" height="180%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feGaussianBlur in="d" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+</svg>
+
+<main class="paper" id="paper" data-s="0">
+  <canvas class="layer" id="brew" aria-hidden="true"></canvas>
+  <canvas class="layer" id="aroma" aria-hidden="true"></canvas>
+  <div class="layer grain" aria-hidden="true"></div>
+
+  <section class="stage" id="stage">
+    <div class="inner">
+      <div class="text" id="text" aria-live="polite"></div>
+      <div class="action">
+        <button class="ink" id="btn" type="button"><span><b class="lbl"></b><svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 7 C24 3 46 10 68 6 S92 5 98 6"/></svg></span></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="card" id="card">
+    <div class="card-ring" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><g filter="url(#wc)">
+        <circle cx="50" cy="50" r="34" fill="rgba(150,96,50,.06)" stroke="rgba(120,72,36,.5)" stroke-width="2.4" stroke-dasharray="190 24" transform="rotate(30 50 50)"/>
+        <circle cx="50" cy="50" r="31.5" fill="none" stroke="rgba(150,96,50,.18)" stroke-width="4" stroke-dasharray="170 44" transform="rotate(40 50 50)"/>
+      </g></svg>
+    </div>
+    <div class="text" id="cardText" aria-live="polite"></div>
+  </div>
+
+  <nav class="marks" id="marks" aria-hidden="true"></nav>
+</main>
+
+<script src="js/content.js" defer></script>
+<script src="js/shaders.js" defer></script>
+<script src="js/brew.js" defer></script>
+<script src="js/aroma.js" defer></script>
+<script src="js/app.js" defer></script>
+</body>
+</html>

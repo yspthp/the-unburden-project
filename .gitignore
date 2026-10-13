@@ -1,0 +1,15 @@
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Raw source font (17 MB; place locally in tools/NotoSerifHK.ttf when running embed_font.py)
+tools/*.ttf
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
