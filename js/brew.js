@@ -9,12 +9,14 @@ const paper = $('#paper');
 const brew = (() => {
   const c = $('#brew');
   const U = {paper:[.953,.929,.882], level:0, pool:0, wet:0, flow:0, ring:0, ringDraw:0, ringR:1, sweet:0, bitter:0,
-             light:0, gold:0, fade:0, vig:0, hold:0, tideA:0, tideB:0, clr:[.1,.3,.9,.8], clrA:0};
+             light:0, gold:0, fade:0, vig:0, hold:0, rays:0, tideA:0, tideB:0, clr:[.1,.3,.9,.8], clrA:0};
   const NAMES = {level:'uLevel', pool:'uPool', wet:'uWet', flow:'uFlow', ring:'uRing', ringDraw:'uRingDraw', ringR:'uRingR',
-                 sweet:'uSweet', bitter:'uBitter', light:'uLight', gold:'uGold', fade:'uFade', vig:'uVig', hold:'uHold'};
+                 sweet:'uSweet', bitter:'uBitter', light:'uLight', gold:'uGold', fade:'uFade', vig:'uVig', hold:'uHold', rays:'uRays'};
   const tw = {};
   let gl = null, pf = null, pm = null, tex = null, fb = null, W = 0, H = 0, loc = {};
-  let raf = 0, last = 0, T = 0, ripT = 0, ripOn = false, rip = [0, 0], holdC = [0, 0];
+  let raf = 0, last = 0, T = 0, holdC = [0, 0];
+  /* 滴落：x,y 落點｜t0 開始時間｜fall 下落秒數（0 為直接泛起漣漪）｜s 大小（負數＝落在紙上濺開） */
+  const DROP_N = 6, FALL = .55, drops = [], dropBuf = new Float32Array(DROP_N * 4);
 
   function shader(type, src){
     const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
@@ -39,7 +41,7 @@ const brew = (() => {
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    ['uF','uRes','uAsp','uT','uPaper','uTide','uRip','uHoldC','uClr','uClrA', ...Object.values(NAMES)].forEach(n => loc[n] = gl.getUniformLocation(pm, n));
+    ['uF','uRes','uAsp','uT','uTime','uPaper','uTide','uDrop','uHoldC','uClr','uClrA', ...Object.values(NAMES)].forEach(n => loc[n] = gl.getUniformLocation(pm, n));
     tex = gl.createTexture(); fb = gl.createFramebuffer();
     c.addEventListener('webglcontextlost', e => { e.preventDefault(); gl = null; paper.classList.add('nogl'); });
     resize();
@@ -84,8 +86,15 @@ const brew = (() => {
     gl.uniform4f(loc.uTide, .34, U.tideA, .295, U.tideB);
     gl.uniform4fv(loc.uClr, U.clr);
     gl.uniform1f(loc.uClrA, U.clrA);
-    const age = (now - ripT) / 1000;
-    gl.uniform3f(loc.uRip, rip[0], rip[1], ripOn && age < 7 ? age : -1);
+    gl.uniform1f(loc.uTime, now / 1000);
+    for (let i = 0; i < DROP_N; i++){
+      const d = drops[i], o = i * 4;
+      if (!d){ dropBuf[o + 2] = -9; continue; }
+      const t = (now - d.t0) / 1000;
+      dropBuf[o] = d.x; dropBuf[o + 1] = d.y; dropBuf[o + 3] = d.s;
+      dropBuf[o + 2] = t < d.fall ? -(1 - t / d.fall) - 1e-3 : t - d.fall;
+    }
+    gl.uniform4fv(loc.uDrop, dropBuf);
     gl.uniform2f(loc.uHoldC, holdC[0], holdC[1]);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
@@ -108,7 +117,8 @@ const brew = (() => {
       last = now;
       step(now); draw(now);
     }
-    const moving = Object.keys(tw).length || (!RM && U.wet > .01 && U.flow > .01) || (ripOn && now - ripT < 7000);
+    for (let i = drops.length - 1; i >= 0; i--) if (now - drops[i].t0 > (drops[i].fall + 7) * 1000) drops.splice(i, 1);
+    const moving = Object.keys(tw).length || (!RM && U.wet > .01 && U.flow > .01) || drops.length || (!RM && U.rays > .001);
     if (moving && !document.hidden) raf = requestAnimationFrame(frame);
     else last = 0;
   }
@@ -119,9 +129,23 @@ const brew = (() => {
     kick();
   }
   function toP(x, y){ return [x / paper.clientWidth * (paper.clientWidth / paper.clientHeight), 1 - y / paper.clientHeight]; }
-  function ripple(P){ if (RM) return; rip = P; ripT = performance.now(); ripOn = true; kick(); }
+  function addDrop(d){
+    if (RM || !gl) return;
+    if (drops.length >= DROP_N) drops.shift();
+    drops.push(Object.assign({t0:performance.now()}, d));
+    kick();
+  }
+  function ripple(P){ addDrop({x:P[0], y:P[1], fall:0, s:1.4}); }
+  /* 從上方滴入底部的苦飲 */
+  function drip(){
+    if (U.pool < .02) return;
+    const asp = paper.clientWidth / paper.clientHeight;
+    addDrop({x:asp * (.22 + Math.random() * .56), y:U.pool * (.35 + Math.random() * .4), fall:FALL, s:.8 + Math.random() * .5});
+  }
+  /* 落在紙上的一滴，濺開後被紙吸乾 */
+  function splash(x, y, s){ addDrop({x:x * paper.clientWidth / paper.clientHeight, y, fall:FALL, s:-s}); }
   function setHold(P){ holdC = P; }
-  return {init, to, toP, ripple, setHold};
+  return {init, to, toP, ripple, drip, splash, setHold};
 })();
 
 window.Unburden.brew = brew;

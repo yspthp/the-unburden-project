@@ -82,15 +82,15 @@ const LOOK = {
   4:{dur:5200, u:{paper:[.912,.872,.805], level:.34, pool:.075, flow:.55, ringDraw:.9, vig:.48}},
   5:{dur:4200, u:{paper:[.925,.888,.82], vig:.28}},
   6:{dur:9000, u:{paper:[.95,.928,.878], light:.45, vig:.05, hold:0, bitter:.8, fade:.3}},
-  7:{dur:7500, u:{paper:[.966,.954,.928], light:.55, gold:.85, fade:.74, ring:.55, ringR:1.4, vig:0, bitter:0}},
-  8:{dur:5000, u:{paper:[.952,.934,.898], light:.22, fade:.84, vig:.1}}
+  7:{dur:7500, u:{paper:[.966,.954,.928], light:.55, gold:.85, fade:.74, ring:.55, ringR:1.4, vig:0, bitter:0, rays:.35}},
+  8:{dur:5000, u:{paper:[.952,.934,.898], light:.22, fade:.84, vig:.1, rays:0}}
 };
 
 /* 第六屏：隨經文出現的啟示節點（行索引 → 目標） */
 const CUES = {
   6:{
-    2:{dur:8000, u:{light:.78, gold:.45, fade:.36}},
-    4:{dur:7500, u:{light:1, gold:1, fade:.4}}
+    2:{dur:8000, u:{light:.78, gold:.45, fade:.36, rays:.45}},
+    4:{dur:7500, u:{light:1, gold:1, fade:.4, rays:1, vig:0}, cls:'epi'}
   }
 };
 

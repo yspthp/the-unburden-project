@@ -52,7 +52,10 @@ function reveal(target, sc){
     later(() => {
       el.classList.add('in');
       if (L[i].k === 'verse') [...el.children].forEach((s, j) => later(() => s.classList.add('in'), j * 125 * pace));
-      if (cues[i]) brew.to(cues[i].u, cues[i].dur);
+      if (cues[i]){
+        brew.to(cues[i].u, cues[i].dur);
+        if (cues[i].cls) paper.classList.add(cues[i].cls);
+      }
     }, t);
   });
   const lastL = L[L.length - 1];
@@ -79,18 +82,27 @@ function enter(i){
   if (look) brew.to(look.u, look.dur);
   if (sc.id === 2){
     later(() => brew.to({sweet:1}, 1600), 600 * K);
+    later(() => brew.splash(.17, .8, 1.15), 2050 * K);
     later(() => brew.to({bitter:1}, 2600), 2600 * K);
     later(() => brew.to({sweet:0}, 5200), 6200 * K);
   }
   if (sc.id === 5) aroma.start();
   if (sc.id === 6) later(() => aroma.toMotes(), 1800 * K);
-  if (sc.id === 7) later(() => aroma.stop(), 3800);
+  if (sc.id === 7){ paper.classList.remove('epi'); later(() => aroma.stop(), 3800); }
+  if (sc.id === 1) dripLoop();
   let target = text, wait = 900;
   if (sc.id === 6) wait = 2800;
   if (sc.card){ paper.classList.add('final'); target = cardText; wait = 2200; }
   build(target, sc);
   reserve(sc);
   later(() => reveal(target, sc), wait * K);
+}
+
+/* 第一至四屏：苦飲不時從上方滴入液面 */
+function dripLoop(){
+  if (cur < 0 || SCREENS[cur].id > 4) return;
+  brew.drip();
+  later(dripLoop, 2400 + Math.random() * 2600);
 }
 
 function leave(cb){
