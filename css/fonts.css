@@ -1,0 +1,11 @@
+/* Brew Serif (Noto Serif HK 300-600)
+ * 執行 `python tools/embed_font.py` 後，下方 data:font/woff2;base64 將自動嵌入精簡子集；
+ * 若未執行本地打包，亦自動透過 Google Fonts 載入相同字重之 Noto Serif HK。
+ */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+HK:wght@300..600&display=block");
+
+@font-face{
+  font-family:"Brew Serif";
+  src:local("Noto Serif HK"),url("data:font/woff2;base64,") format("woff2");
+  font-weight:300 600;font-display:block;
+}
