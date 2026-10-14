@@ -103,7 +103,7 @@ const brew = (() => {
     for (const k in tw){
       const w = tw[k];
       if (w.a === null) w.a = Array.isArray(U[k]) ? U[k].slice() : U[k];
-      const r = Math.min(1, (now - w.t0) / w.d), e = ease(r);
+      const r = Math.max(0, Math.min(1, (now - w.t0) / w.d)), e = ease(r);
       U[k] = Array.isArray(w.b) ? w.b.map((v, i) => w.a[i] + (v - w.a[i]) * e) : w.a + (w.b - w.a) * e;
       if (r >= 1) delete tw[k];
     }

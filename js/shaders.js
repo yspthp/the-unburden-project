@@ -8,6 +8,7 @@ const VS = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}';
 
 const COMMON = `
 precision highp float;
+float gs(float x){return exp(-x*x);}
 float h12(vec2 p){vec3 p3=fract(vec3(p.xyx)*.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
 float vn(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.0-2.0*f);
   return mix(mix(h12(i),h12(i+vec2(1.0,0.0)),u.x),mix(h12(i+vec2(0.0,1.0)),h12(i+vec2(1.0,1.0)),u.x),u.y);}
@@ -46,13 +47,13 @@ void main(){
   float d=edgeAt(uLevel,p,en)+fl*0.035*uWet-uv.y;
   float inW=smoothstep(-0.003,0.007,d)*live;
   float wick=(0.06+0.12*smoothstep(0.0,0.3,d))*inW*(0.82+0.36*fib);
-  float rim=exp(-pow((d-0.0035)/mix(0.006,0.0045,1.0-uWet),2.0))*mix(0.1,0.38,1.0-uWet)*live;
+  float rim=gs((d-0.0035)/mix(0.006,0.0045,1.0-uWet))*mix(0.1,0.38,1.0-uWet)*live;
 
   /* 喝下後留下的潮線 */
   float dA=edgeAt(uTide.x,p,en)-uv.y;
-  float tide=exp(-pow((dA-0.0035)/0.0045,2.0))*0.42*uTide.y+smoothstep(-0.003,0.007,dA)*0.05*uTide.y*(0.8+0.4*fib);
+  float tide=gs((dA-0.0035)/0.0045)*0.42*uTide.y+smoothstep(-0.003,0.007,dA)*0.05*uTide.y*(0.8+0.4*fib);
   float dB=edgeAt(uTide.z,p,en*0.9+0.03)-uv.y;
-  tide+=exp(-pow((dB-0.003)/0.004,2.0))*0.3*uTide.w;
+  tide+=gs((dB-0.003)/0.004)*0.3*uTide.w;
 
   /* 底部的苦飲液面 */
   float pd=uPool+en*0.07+fl*0.03-uv.y;
@@ -67,7 +68,7 @@ void main(){
       vec2 dv=p-D.xy;float dl=length(dv);
       float r0=(0.011+0.02*(1.0-exp(-D.z*2.2)))*(-D.w);
       float s=smoothstep(r0,r0-0.005,dl+en*0.018);
-      s+=exp(-pow((dl+en*0.018-r0+0.002)/0.0025,2.0))*0.6;
+      s+=gs((dl+en*0.018-r0+0.002)/0.0025)*0.6;
       float sa=atan(dv.y,dv.x)*1.27+float(i)*1.7;
       float cell=floor(sa*2.0);
       float sr=r0*(1.55+0.7*h12(vec2(cell,float(i))));
@@ -86,11 +87,11 @@ void main(){
   float ang=fract(atan(rv.y,rv.x)/6.2831853+0.62)+en*0.05;
   float full=smoothstep(0.9,1.0,uRingDraw);
   float arc=smoothstep(uRingDraw*1.13+0.01,uRingDraw*1.13-0.1,ang)*mix(smoothstep(-0.03,0.07,ang),1.0,full);
-  float ring=(exp(-pow((rd-R)/(0.0045*uRingR),2.0))*0.6/uRingR+exp(-pow((rd-R+0.011)/0.013,2.0))*0.15)*arc+smoothstep(R,R-0.012,rd)*0.035;
+  float ring=(gs((rd-R)/(0.0045*uRingR))*0.6/uRingR+gs((rd-R+0.011)/0.013)*0.15)*arc+smoothstep(R,R-0.012,rd)*0.035;
 
   /* 苦的一滴：中心淡、邊緣聚色 */
   vec2 bc=vec2(uAsp*0.17,0.8);float bd=length(p-bc)+en*0.05;
-  float b=smoothstep(0.037,0.027,bd)*(0.26+0.24*smoothstep(0.0,0.032,bd))+exp(-pow((bd-0.033)/0.005,2.0))*0.5;
+  float b=smoothstep(0.037,0.027,bd)*(0.26+0.24*smoothstep(0.0,0.032,bd))+gs((bd-0.033)/0.005)*0.5;
   b+=smoothstep(0.01,0.004,length(p-bc-vec2(0.065,0.032))+en*0.012)*0.55;
   b+=smoothstep(0.007,0.002,length(p-bc-vec2(-0.03,-0.07))+en*0.01)*0.45;
 
@@ -115,7 +116,7 @@ void main(){
   float lc=smoothstep(1.3,0.0,length((uv-vec2(0.5,0.84))*vec2(1.0,0.72)));
   float tr=0.97-0.2*(form-0.5)-0.06*(fib-0.5);
   vec3 back=vec3(1.0,0.955,0.87)*tr*(0.9+0.12*lc)*exp(-K*T*1.2)*exp(-Kh*sT);
-  vec3 col=mix(refl,back,uLight*(0.6+0.4*lc));
+  vec3 col=mix(refl,back,clamp(uLight*(0.6+0.4*lc),0.0,1.0));
 
   /* 液體本身：深處是近乎黑的濃褐，淺處透出琥珀與紙纖維，表面浮著油脂紋 */
   float liq=inP*smoothstep(0.0,0.3,uWet);
@@ -125,7 +126,7 @@ void main(){
   vec2 cq=p*vec2(4.0,13.0)+vec2(uT*0.045,0.0)+fl*1.5;
   float crema=smoothstep(0.52,0.82,fbm(cq+1.3*vec2(fbm(cq*1.6+2.0),fbm(cq*1.6+7.0))));
   coffee=mix(coffee,vec3(0.48,0.29,0.14),crema*0.3*dep);
-  coffee*=1.0-0.35*exp(-pow((pd-0.006)/0.006,2.0));
+  coffee*=1.0-0.35*gs((pd-0.006)/0.006);
   col=mix(col,coffee,liq*0.94);
   float sw=splat*smoothstep(0.0,0.4,uWet);
   /* 正在落下的一滴：拉長的水珠，帶一點高光 */
@@ -153,7 +154,7 @@ void main(){
     vec4 D=uDrop[i];
     if(D.z>=0.0){
       float dd=length(p-D.xy);float age=D.z;
-      float env=exp(-pow((dd-age*0.2)/(0.035+age*0.03),2.0))*exp(-age*0.75);
+      float env=gs((dd-age*0.2)/(0.035+age*0.03))*exp(-age*0.75);
       H+=sin(dd*150.0-age*16.0)*env*0.004*abs(D.w)*step(0.0,D.w);
     }
   }
@@ -170,7 +171,7 @@ void main(){
   win*=1.0-0.75*smoothstep(0.006,0.002,min(abs(rp.x),abs(rp.y)));
   float sky=smoothstep(0.35,0.0,length(rp*vec2(0.8,1.0)));
   col+=vec3(1.0,0.96,0.88)*(win*0.38+sky*0.07)*liq*(1.0-dep*0.25);
-  col+=vec3(1.0,0.93,0.82)*exp(-pow((pd-0.0025)/0.0018,2.0))*0.22*liq*(0.6+0.8*vn(p*40.0));
+  col+=vec3(1.0,0.93,0.82)*gs((pd-0.0025)/0.0018)*0.22*liq*(0.6+0.8*vn(p*40.0));
 #endif
 
   /* 頓悟之光：自上方穿透而下的光束與暖暈 */
